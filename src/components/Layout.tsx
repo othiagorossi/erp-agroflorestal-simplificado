@@ -1,5 +1,5 @@
 import { Outlet, useLocation } from 'react-router-dom'
-import { Bell, Search, User } from 'lucide-react'
+import { Bell, Search, AlertTriangle } from 'lucide-react'
 import { SidebarProvider, SidebarTrigger, SidebarInset } from '@/components/ui/sidebar'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -13,8 +13,15 @@ export default function Layout() {
   return (
     <SidebarProvider defaultOpen={!isMobile}>
       <AppSidebar />
-      <SidebarInset className="bg-background overflow-hidden">
-        <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center justify-between border-b bg-card px-4 md:px-6 shadow-sm">
+      <SidebarInset className="bg-background flex flex-col h-screen overflow-hidden">
+        <div className="bg-amber-100/80 text-amber-800 px-4 py-2 text-xs md:text-sm font-medium flex items-center justify-center gap-2 border-b border-amber-200 shrink-0">
+          <AlertTriangle className="h-4 w-4 shrink-0" />
+          <span className="text-center">
+            Aviso: Dados armazenados em memória. As alterações serão perdidas ao recarregar a página
+            até a integração com o backend.
+          </span>
+        </div>
+        <header className="shrink-0 flex h-16 items-center justify-between border-b bg-card px-4 md:px-6 shadow-sm z-10">
           <div className="flex items-center gap-4">
             <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
             <div className="hidden md:flex items-center gap-2 rounded-full bg-muted/50 px-4 py-2 text-sm text-muted-foreground w-64 border border-transparent focus-within:border-primary/20 focus-within:bg-background transition-colors">
@@ -44,7 +51,7 @@ export default function Layout() {
           key={location.pathname}
           className="flex-1 overflow-y-auto p-4 md:p-8 animate-fade-in-up"
         >
-          <div className="mx-auto max-w-6xl w-full">
+          <div className="mx-auto max-w-6xl w-full pb-12">
             <Outlet />
           </div>
         </main>

@@ -7,6 +7,8 @@ export interface Task {
   title: string
   status: TaskStatus
   crop: string
+  category: string
+  area: string
   priority: 'Alta' | 'Média' | 'Baixa'
 }
 
@@ -18,6 +20,8 @@ export interface Crop {
   health: 'green' | 'yellow' | 'red'
   ratio: string
   plot: string
+  growthStage: string
+  plantingDate: string
 }
 
 export interface Activity {
@@ -27,24 +31,53 @@ export interface Activity {
 }
 
 interface State {
+  isAuthenticated: boolean
   tasks: Task[]
   crops: Crop[]
   activities: Activity[]
-  metrics: { area: number; plants: number; carbon: number }
+  metrics: { area: number; plants: number; carbon: number; soilHealth: number; waterUsage: number }
+  soilData: { month: string; organic: number }[]
 }
 
 let state: State = {
+  isAuthenticated: false,
   tasks: [
-    { id: '1', title: 'Poda de Formação', status: 'todo', crop: 'Cacau', priority: 'Alta' },
+    {
+      id: '1',
+      title: 'Poda de Formação',
+      status: 'todo',
+      crop: 'Cacau',
+      category: 'Poda',
+      area: 'Setor A',
+      priority: 'Alta',
+    },
     {
       id: '2',
       title: 'Colheita de Cachos',
       status: 'in-progress',
       crop: 'Banana',
+      category: 'Colheita',
+      area: 'Setor B',
       priority: 'Média',
     },
-    { id: '3', title: 'Adubação Orgânica', status: 'done', crop: 'Palmito', priority: 'Baixa' },
-    { id: '4', title: 'Plantio de Mudas', status: 'todo', crop: 'Ervas', priority: 'Média' },
+    {
+      id: '3',
+      title: 'Adubação Orgânica',
+      status: 'done',
+      crop: 'Palmito',
+      category: 'Adubação',
+      area: 'Setor C',
+      priority: 'Baixa',
+    },
+    {
+      id: '4',
+      title: 'Plantio de Mudas',
+      status: 'todo',
+      crop: 'Ervas',
+      category: 'Plantio',
+      area: 'Setor D',
+      priority: 'Média',
+    },
   ],
   crops: [
     {
@@ -55,6 +88,8 @@ let state: State = {
       health: 'green',
       ratio: '40%',
       plot: 'Setor A',
+      growthStage: 'Vegetativo',
+      plantingDate: '2025-01-10',
     },
     {
       id: '2',
@@ -64,6 +99,8 @@ let state: State = {
       health: 'green',
       ratio: '30%',
       plot: 'Setor A',
+      growthStage: 'Produtivo',
+      plantingDate: '2024-06-15',
     },
     {
       id: '3',
@@ -73,6 +110,8 @@ let state: State = {
       health: 'yellow',
       ratio: '20%',
       plot: 'Setor B',
+      growthStage: 'Produtivo',
+      plantingDate: '2024-03-20',
     },
     {
       id: '4',
@@ -82,6 +121,8 @@ let state: State = {
       health: 'green',
       ratio: '10%',
       plot: 'Setor C',
+      growthStage: 'Muda',
+      plantingDate: '2026-02-01',
     },
     {
       id: '5',
@@ -91,6 +132,8 @@ let state: State = {
       health: 'green',
       ratio: '50%',
       plot: 'Setor B',
+      growthStage: 'Vegetativo',
+      plantingDate: '2025-05-12',
     },
   ],
   activities: [
@@ -98,7 +141,15 @@ let state: State = {
     { id: '2', text: 'Colheita de Banana Prata finalizada', date: 'Ontem, 16:45' },
     { id: '3', text: 'Adubação realizada no Setor B', date: '15 Mai, 09:00' },
   ],
-  metrics: { area: 120, plants: 15400, carbon: 450 },
+  metrics: { area: 120, plants: 15400, carbon: 450, soilHealth: 4.9, waterUsage: 12500 },
+  soilData: [
+    { month: 'Jan', organic: 3.2 },
+    { month: 'Mar', organic: 3.5 },
+    { month: 'Mai', organic: 3.8 },
+    { month: 'Jul', organic: 4.1 },
+    { month: 'Set', organic: 4.5 },
+    { month: 'Nov', organic: 4.9 },
+  ],
 }
 
 const listeners = new Set<() => void>()
@@ -111,6 +162,14 @@ const subscribe = (listener: () => void) => {
 const notify = () => listeners.forEach((l) => l())
 
 export const storeActions = {
+  login: () => {
+    state = { ...state, isAuthenticated: true }
+    notify()
+  },
+  logout: () => {
+    state = { ...state, isAuthenticated: false }
+    notify()
+  },
   addTask: (task: Omit<Task, 'id'>) => {
     state = { ...state, tasks: [...state.tasks, { ...task, id: Math.random().toString() }] }
     notify()
@@ -119,12 +178,23 @@ export const storeActions = {
     state = { ...state, tasks: state.tasks.map((t) => (t.id === id ? { ...t, status } : t)) }
     notify()
   },
+  addCrop: (crop: Omit<Crop, 'id'>) => {
+    state = { ...state, crops: [...state.crops, { ...crop, id: Math.random().toString() }] }
+    notify()
+  },
+  updateMetrics: (newMetrics: Partial<State['metrics']>) => {
+    state = { ...state, metrics: { ...state.metrics, ...newMetrics } }
+    if (
+      newMetrics.soilHealth &&
+      newMetrics.soilHealth !== state.soilData[state.soilData.length - 1].organic
+    ) {
+      state.soilData = [...state.soilData, { month: 'Atual', organic: newMetrics.soilHealth }]
+    }
+    notify()
+  },
 }
 
 export default function useMainStore() {
   const currentState = useSyncExternalStore(subscribe, () => state)
-  return {
-    ...currentState,
-    ...storeActions,
-  }
+  return { ...currentState, ...storeActions }
 }

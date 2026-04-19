@@ -1,9 +1,16 @@
 import { useState } from 'react'
-import { Plus, GripVertical } from 'lucide-react'
+import { Plus, GripVertical, MapPin } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+  SheetDescription,
+} from '@/components/ui/sheet'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -26,14 +33,27 @@ export default function Tasks() {
   const { tasks, addTask, updateTaskStatus } = useMainStore()
   const { toast } = useToast()
   const [open, setOpen] = useState(false)
-  const [formData, setFormData] = useState({ title: '', crop: 'Cacau', priority: 'Média' as any })
+  const [formData, setFormData] = useState({
+    title: '',
+    crop: 'Cacau',
+    category: 'Poda',
+    area: '',
+    priority: 'Média' as any,
+  })
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!formData.title) return
+    if (!formData.title || !formData.area) {
+      toast({
+        title: 'Atenção',
+        description: 'Preencha os campos obrigatórios.',
+        variant: 'destructive',
+      })
+      return
+    }
     addTask({ ...formData, status: 'todo' })
     setOpen(false)
-    setFormData({ title: '', crop: 'Cacau', priority: 'Média' })
+    setFormData({ title: '', crop: 'Cacau', category: 'Poda', area: '', priority: 'Média' })
     toast({ title: 'Tarefa adicionada', description: 'Nova tarefa cadastrada com sucesso.' })
   }
 
@@ -58,18 +78,23 @@ export default function Tasks() {
               <Plus className="h-4 w-4" /> Nova Tarefa
             </Button>
           </SheetTrigger>
-          <SheetContent>
+          <SheetContent className="overflow-y-auto">
             <SheetHeader>
               <SheetTitle>Adicionar Tarefa</SheetTitle>
+              <SheetDescription>
+                Programe uma nova atividade para as equipes de campo.
+              </SheetDescription>
             </SheetHeader>
-            <form onSubmit={handleSubmit} className="space-y-6 mt-6">
+            <form onSubmit={handleSubmit} className="space-y-5 mt-6 pb-6">
               <div className="space-y-2">
-                <Label htmlFor="title">Descrição da Tarefa</Label>
+                <Label htmlFor="title">
+                  Descrição da Tarefa <span className="text-destructive">*</span>
+                </Label>
                 <Input
                   id="title"
                   value={formData.title}
                   onChange={(e) => setFormData((p) => ({ ...p, title: e.target.value }))}
-                  placeholder="Ex: Poda no Setor B"
+                  placeholder="Ex: Poda de formação"
                 />
               </div>
               <div className="space-y-2">
@@ -86,8 +111,38 @@ export default function Tasks() {
                     <SelectItem value="Palmito">Palmito</SelectItem>
                     <SelectItem value="Banana">Banana</SelectItem>
                     <SelectItem value="Ervas">Ervas</SelectItem>
+                    <SelectItem value="Geral">Geral</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Categoria</Label>
+                <Select
+                  value={formData.category}
+                  onValueChange={(v) => setFormData((p) => ({ ...p, category: v }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Poda">Poda</SelectItem>
+                    <SelectItem value="Adubação">Adubação</SelectItem>
+                    <SelectItem value="Colheita">Colheita</SelectItem>
+                    <SelectItem value="Plantio">Plantio</SelectItem>
+                    <SelectItem value="Manutenção">Manutenção</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="area">
+                  Área Designada <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="area"
+                  value={formData.area}
+                  onChange={(e) => setFormData((p) => ({ ...p, area: e.target.value }))}
+                  placeholder="Ex: Setor Norte Lote 2"
+                />
               </div>
               <div className="space-y-2">
                 <Label>Prioridade</Label>
@@ -106,7 +161,7 @@ export default function Tasks() {
                 </Select>
               </div>
               <Button type="submit" className="w-full">
-                Salvar
+                Salvar Tarefa
               </Button>
             </form>
           </SheetContent>
@@ -131,16 +186,24 @@ export default function Tasks() {
                 {colTasks.map((task) => (
                   <Card
                     key={task.id}
-                    className="border-none shadow-sm cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow"
+                    className="border-none shadow-sm hover:shadow-md transition-shadow cursor-pointer"
                   >
                     <CardContent className="p-4">
                       <div className="flex justify-between items-start mb-3">
-                        <Badge
-                          variant="outline"
-                          className="text-xs font-normal border-primary/20 text-primary"
-                        >
-                          {task.crop}
-                        </Badge>
+                        <div className="flex gap-2 flex-wrap">
+                          <Badge
+                            variant="outline"
+                            className="text-xs font-normal border-primary/20 text-primary"
+                          >
+                            {task.crop}
+                          </Badge>
+                          <Badge
+                            variant="secondary"
+                            className="text-xs font-normal bg-muted text-muted-foreground hover:bg-muted"
+                          >
+                            {task.category}
+                          </Badge>
+                        </div>
                         <Button
                           variant="ghost"
                           size="icon"
@@ -150,7 +213,10 @@ export default function Tasks() {
                           <GripVertical className="h-4 w-4" />
                         </Button>
                       </div>
-                      <p className="font-medium text-sm mb-3 leading-snug">{task.title}</p>
+                      <p className="font-medium text-sm mb-2 leading-snug">{task.title}</p>
+                      <p className="text-xs text-muted-foreground mb-4 flex items-center gap-1.5">
+                        <MapPin className="h-3 w-3" /> {task.area}
+                      </p>
                       <div className="flex items-center justify-between mt-auto">
                         <span
                           className={`text-xs font-medium px-2 py-0.5 rounded-sm ${

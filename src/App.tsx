@@ -9,6 +9,14 @@ import Tasks from '@/pages/Tasks'
 import Impact from '@/pages/Impact'
 import Inventory from '@/pages/Inventory'
 import NotFound from '@/pages/NotFound'
+import Login from '@/pages/Login'
+import useMainStore from '@/stores/main'
+
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const { isAuthenticated } = useMainStore()
+  if (!isAuthenticated) return <Navigate to="/login" replace />
+  return <>{children}</>
+}
 
 const App = () => (
   <BrowserRouter future={{ v7_startTransition: false, v7_relativeSplatPath: false }}>
@@ -16,7 +24,14 @@ const App = () => (
       <Toaster />
       <Sonner />
       <Routes>
-        <Route element={<Layout />}>
+        <Route path="/login" element={<Login />} />
+        <Route
+          element={
+            <ProtectedRoute>
+              <Layout />
+            </ProtectedRoute>
+          }
+        >
           <Route path="/" element={<Index />} />
           <Route path="/cultivos" element={<Crops />} />
           <Route path="/tarefas" element={<Tasks />} />
