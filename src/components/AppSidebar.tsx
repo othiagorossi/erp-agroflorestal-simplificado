@@ -1,9 +1,18 @@
 import { Link, useLocation } from 'react-router-dom'
-import { LayoutDashboard, Sprout, ClipboardList, LineChart, Package, Leaf } from 'lucide-react'
+import {
+  LayoutDashboard,
+  Sprout,
+  ClipboardList,
+  LineChart,
+  Package,
+  Leaf,
+  LogOut,
+} from 'lucide-react'
 import {
   Sidebar,
   SidebarContent,
   SidebarHeader,
+  SidebarFooter,
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
@@ -11,6 +20,8 @@ import {
   SidebarGroupContent,
   SidebarGroupLabel,
 } from '@/components/ui/sidebar'
+import { useAuth } from '@/hooks/use-auth'
+import { useToast } from '@/hooks/use-toast'
 
 const navItems = [
   { title: 'Início', icon: LayoutDashboard, url: '/' },
@@ -22,6 +33,13 @@ const navItems = [
 
 export function AppSidebar() {
   const location = useLocation()
+  const { signOut } = useAuth()
+  const { toast } = useToast()
+
+  const handleLogout = async () => {
+    await signOut()
+    toast({ title: 'Sessão encerrada', description: 'Você saiu do sistema.' })
+  }
 
   return (
     <Sidebar variant="sidebar">
@@ -62,6 +80,19 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      <SidebarFooter className="p-4">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              onClick={handleLogout}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <LogOut className="h-5 w-5" />
+              <span className="font-medium">Sair</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
     </Sidebar>
   )
 }
