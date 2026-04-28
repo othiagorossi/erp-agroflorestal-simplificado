@@ -9,6 +9,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      finance_records: {
+        Row: {
+          amount: number
+          cost_center: string
+          cost_center_type: string
+          created_at: string
+          date: string
+          description: string
+          id: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          cost_center: string
+          cost_center_type: string
+          created_at?: string
+          date: string
+          description: string
+          id?: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          cost_center?: string
+          cost_center_type?: string
+          created_at?: string
+          date?: string
+          description?: string
+          id?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -180,6 +216,16 @@ export const Constants = {
 // --- COLUMN TYPES (actual PostgreSQL types) ---
 // Use this to know the real database type when writing migrations.
 // "string" in TypeScript types above may be uuid, text, varchar, timestamptz, etc.
+// Table: finance_records
+//   id: uuid (not null, default: gen_random_uuid())
+//   user_id: uuid (not null)
+//   type: text (not null)
+//   amount: numeric (not null)
+//   description: text (not null)
+//   cost_center_type: text (not null)
+//   cost_center: text (not null)
+//   date: date (not null)
+//   created_at: timestamp with time zone (not null, default: now())
 // Table: profiles
 //   id: uuid (not null)
 //   email: text (not null)
@@ -188,11 +234,25 @@ export const Constants = {
 //   created_at: timestamp with time zone (not null, default: now())
 
 // --- CONSTRAINTS ---
+// Table: finance_records
+//   PRIMARY KEY finance_records_pkey: PRIMARY KEY (id)
+//   CHECK finance_records_type_check: CHECK ((type = ANY (ARRAY['income'::text, 'expense'::text])))
+//   FOREIGN KEY finance_records_user_id_fkey: FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
 // Table: profiles
 //   FOREIGN KEY profiles_id_fkey: FOREIGN KEY (id) REFERENCES auth.users(id) ON DELETE CASCADE
 //   PRIMARY KEY profiles_pkey: PRIMARY KEY (id)
 
 // --- ROW LEVEL SECURITY POLICIES ---
+// Table: finance_records
+//   Policy "Users can delete their own finance records" (DELETE, PERMISSIVE) roles={authenticated}
+//     USING: (auth.uid() = user_id)
+//   Policy "Users can insert their own finance records" (INSERT, PERMISSIVE) roles={authenticated}
+//     WITH CHECK: (auth.uid() = user_id)
+//   Policy "Users can update their own finance records" (UPDATE, PERMISSIVE) roles={authenticated}
+//     USING: (auth.uid() = user_id)
+//     WITH CHECK: (auth.uid() = user_id)
+//   Policy "Users can view their own finance records" (SELECT, PERMISSIVE) roles={authenticated}
+//     USING: (auth.uid() = user_id)
 // Table: profiles
 //   Policy "Users can update their own profile" (UPDATE, PERMISSIVE) roles={authenticated}
 //     USING: (auth.uid() = id)

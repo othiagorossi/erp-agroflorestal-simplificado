@@ -22,6 +22,21 @@ export const getFinanceRecords = async () => {
   return data as FinanceRecord[]
 }
 
+export const createFinanceRecords = async (
+  records: Omit<FinanceRecord, 'id' | 'created_at' | 'user_id'>[],
+) => {
+  const { data: userData } = await supabase.auth.getUser()
+  if (!userData.user) throw new Error('Not authenticated')
+
+  const { data, error } = await supabase
+    .from('finance_records')
+    .insert(records.map((r) => ({ ...r, user_id: userData.user.id })))
+    .select()
+
+  if (error) throw error
+  return data as FinanceRecord[]
+}
+
 export const createFinanceRecord = async (
   record: Omit<FinanceRecord, 'id' | 'created_at' | 'user_id'>,
 ) => {
