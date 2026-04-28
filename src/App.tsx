@@ -8,6 +8,7 @@ import Crops from '@/pages/Crops'
 import Tasks from '@/pages/Tasks'
 import Impact from '@/pages/Impact'
 import Inventory from '@/pages/Inventory'
+import Finance from '@/pages/Finance'
 import NotFound from '@/pages/NotFound'
 import Login from '@/pages/Login'
 import { AuthProvider, useAuth } from '@/hooks/use-auth'
@@ -46,6 +47,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/cultivos" element={<Crops />} />
             <Route path="/tarefas" element={<Tasks />} />
+            <Route path="/financeiro" element={<Finance />} />
             <Route path="/impacto" element={<Impact />} />
             <Route path="/estoque" element={<Inventory />} />
           </Route>

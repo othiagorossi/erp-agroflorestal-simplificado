@@ -7,6 +7,7 @@ import {
   Package,
   Leaf,
   LogOut,
+  DollarSign,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -27,6 +28,7 @@ const navItems = [
   { title: 'Início', icon: LayoutDashboard, url: '/' },
   { title: 'Cultivos', icon: Sprout, url: '/cultivos' },
   { title: 'Tarefas', icon: ClipboardList, url: '/tarefas' },
+  { title: 'Financeiro', icon: DollarSign, url: '/financeiro' },
   { title: 'Impacto', icon: LineChart, url: '/impacto' },
   { title: 'Estoque', icon: Package, url: '/estoque' },
 ]
