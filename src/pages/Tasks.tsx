@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
 import useMainStore, { TaskStatus } from '@/stores/main'
+import { logActivity } from '@/services/activity-logs'
 
 const COLUMNS: { id: TaskStatus; title: string }[] = [
   { id: 'todo', title: 'A Fazer' },
@@ -52,6 +53,9 @@ export default function Tasks() {
       return
     }
     addTask({ ...formData, status: 'todo' })
+
+    logActivity('CREATE', 'tarefa', undefined, { title: formData.title, crop: formData.crop })
+
     setOpen(false)
     setFormData({ title: '', crop: 'Cacau', category: 'Poda', area: '', priority: 'Média' })
     toast({ title: 'Tarefa adicionada', description: 'Nova tarefa cadastrada com sucesso.' })
@@ -60,6 +64,9 @@ export default function Tasks() {
   const cycleStatus = (id: string, current: TaskStatus) => {
     const next = current === 'todo' ? 'in-progress' : current === 'in-progress' ? 'done' : 'todo'
     updateTaskStatus(id, next)
+
+    logActivity('UPDATE', 'tarefa', id, { status: next })
+
     if (next === 'done')
       toast({ title: 'Tarefa Concluída!', description: 'O painel foi atualizado.' })
   }

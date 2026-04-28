@@ -10,6 +10,7 @@ import Impact from '@/pages/Impact'
 import Inventory from '@/pages/Inventory'
 import Finance from '@/pages/Finance'
 import Profile from '@/pages/Profile'
+import ActivityLogs from '@/pages/ActivityLogs'
 import NotFound from '@/pages/NotFound'
 import Login from '@/pages/Login'
 import { AuthProvider, useAuth } from '@/hooks/use-auth'
@@ -52,6 +53,7 @@ const App = () => (
             <Route path="/impacto" element={<Impact />} />
             <Route path="/estoque" element={<Inventory />} />
             <Route path="/perfil" element={<Profile />} />
+            <Route path="/historico" element={<ActivityLogs />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

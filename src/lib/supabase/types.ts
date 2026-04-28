@@ -52,6 +52,7 @@ export type Database = {
           email: string
           id: string
           name: string | null
+          role: string
         }
         Insert: {
           avatar_url?: string | null
@@ -59,6 +60,7 @@ export type Database = {
           email: string
           id: string
           name?: string | null
+          role?: string
         }
         Update: {
           avatar_url?: string | null
@@ -66,6 +68,7 @@ export type Database = {
           email?: string
           id?: string
           name?: string | null
+          role?: string
         }
         Relationships: []
       }
@@ -232,6 +235,7 @@ export const Constants = {
 //   name: text (nullable)
 //   avatar_url: text (nullable)
 //   created_at: timestamp with time zone (not null, default: now())
+//   role: text (not null, default: 'viewer'::text)
 
 // --- CONSTRAINTS ---
 // Table: finance_records
@@ -257,8 +261,8 @@ export const Constants = {
 //   Policy "Users can update their own profile" (UPDATE, PERMISSIVE) roles={authenticated}
 //     USING: (auth.uid() = id)
 //     WITH CHECK: (auth.uid() = id)
-//   Policy "Users can view their own profile" (SELECT, PERMISSIVE) roles={authenticated}
-//     USING: (auth.uid() = id)
+//   Policy "Users can view all profiles" (SELECT, PERMISSIVE) roles={authenticated}
+//     USING: true
 
 // --- DATABASE FUNCTIONS ---
 // FUNCTION handle_new_user()
@@ -268,13 +272,19 @@ export const Constants = {
 //    SECURITY DEFINER
 //   AS $function$
 //   BEGIN
-//     INSERT INTO public.profiles (id, email, name, avatar_url)
+//     INSERT INTO public.profiles (id, email, name, avatar_url, role)
 //     VALUES (
 //       NEW.id,
 //       NEW.email,
 //       NEW.raw_user_meta_data->>'full_name',
-//       NEW.raw_user_meta_data->>'avatar_url'
-//     );
+//       NEW.raw_user_meta_data->>'avatar_url',
+//       COALESCE(NEW.raw_user_meta_data->>'role', 'viewer')
+//     )
+//     ON CONFLICT (id) DO UPDATE SET
+//       email = EXCLUDED.email,
+//       name = COALESCE(EXCLUDED.name, public.profiles.name),
+//       avatar_url = COALESCE(EXCLUDED.avatar_url, public.profiles.avatar_url),
+//       role = COALESCE(EXCLUDED.role, public.profiles.role);
 //     RETURN NEW;
 //   END;
 //   $function$

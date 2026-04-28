@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase/client'
+import { logActivity } from './activity-logs'
 
 export type FinanceRecord = {
   id: string
@@ -34,6 +35,16 @@ export const createFinanceRecords = async (
     .select()
 
   if (error) throw error
+
+  if (data) {
+    for (const record of data) {
+      await logActivity('CREATE', 'finance_record', record.id, {
+        amount: record.amount,
+        description: record.description,
+      })
+    }
+  }
+
   return data as FinanceRecord[]
 }
 
@@ -50,6 +61,14 @@ export const createFinanceRecord = async (
     .single()
 
   if (error) throw error
+
+  if (data) {
+    await logActivity('CREATE', 'finance_record', data.id, {
+      amount: data.amount,
+      description: data.description,
+    })
+  }
+
   return data as FinanceRecord
 }
 
@@ -57,4 +76,6 @@ export const deleteFinanceRecord = async (id: string) => {
   const { error } = await supabase.from('finance_records').delete().eq('id', id)
 
   if (error) throw error
+
+  await logActivity('DELETE', 'finance_record', id)
 }

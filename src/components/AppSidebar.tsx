@@ -9,6 +9,7 @@ import {
   LogOut,
   DollarSign,
   UserCircle,
+  History,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -34,7 +35,10 @@ const navItems = [
   { title: 'Estoque', icon: Package, url: '/estoque' },
 ]
 
-const bottomNavItems = [{ title: 'Perfil & Equipe', icon: UserCircle, url: '/perfil' }]
+const bottomNavItems = [
+  { title: 'Perfil & Equipe', icon: UserCircle, url: '/perfil' },
+  { title: 'Histórico', icon: History, url: '/historico' },
+]
 
 export function AppSidebar() {
   const location = useLocation()
