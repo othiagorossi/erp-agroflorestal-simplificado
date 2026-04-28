@@ -8,6 +8,7 @@ import {
   Leaf,
   LogOut,
   DollarSign,
+  UserCircle,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -32,6 +33,8 @@ const navItems = [
   { title: 'Impacto', icon: LineChart, url: '/impacto' },
   { title: 'Estoque', icon: Package, url: '/estoque' },
 ]
+
+const bottomNavItems = [{ title: 'Perfil & Equipe', icon: UserCircle, url: '/perfil' }]
 
 export function AppSidebar() {
   const location = useLocation()
@@ -61,6 +64,34 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu className="mt-2 space-y-1">
               {navItems.map((item) => {
+                const isActive = location.pathname === item.url
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive}
+                      tooltip={item.title}
+                      className="px-4 py-6"
+                    >
+                      <Link to={item.url} className="flex items-center gap-3">
+                        <item.icon className="h-5 w-5" />
+                        <span className="font-medium text-base">{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup className="mt-auto">
+          <SidebarGroupLabel className="text-sidebar-primary-foreground/60">
+            Configurações
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu className="space-y-1">
+              {bottomNavItems.map((item) => {
                 const isActive = location.pathname === item.url
                 return (
                   <SidebarMenuItem key={item.title}>
