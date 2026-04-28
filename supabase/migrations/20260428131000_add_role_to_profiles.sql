@@ -26,7 +26,7 @@ BEGIN
     role = COALESCE(EXCLUDED.role, public.profiles.role);
   RETURN NEW;
 END;
-$function$
+$function$;
 
 -- Update RLS policies for profiles
 DROP POLICY IF EXISTS "Users can view their own profile" ON public.profiles;
