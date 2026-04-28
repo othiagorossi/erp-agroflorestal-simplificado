@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import useMainStore from '@/stores/main'
 
 export default function Index() {
-  const { metrics, activities, tasks } = useMainStore()
+  const { metrics, activities, tasks, crops } = useMainStore()
   const activeTasks = tasks.filter((t) => t.status !== 'done').length
 
   const kpis = [
@@ -55,29 +55,28 @@ export default function Index() {
           </CardHeader>
           <CardContent>
             <div className="space-y-6 mt-4">
-              {[
-                { crop: 'Banana Prata', window: 'Jul - Ago', progress: 85, color: 'bg-amber-400' },
-                { crop: 'Cacau CCN-51', window: 'Set - Nov', progress: 40, color: 'bg-primary' },
-                {
-                  crop: 'Palmito Pupunha',
-                  window: 'Out - Dez',
-                  progress: 20,
-                  color: 'bg-secondary',
-                },
-              ].map((item, i) => (
-                <div key={i} className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="font-medium">{item.crop}</span>
-                    <span className="text-muted-foreground">{item.window}</span>
+              {crops.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  Nenhum cultivo cadastrado.
+                </p>
+              ) : (
+                crops.slice(0, 3).map((item, i) => (
+                  <div key={i} className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="font-medium">
+                        {item.name} {item.variety}
+                      </span>
+                      <span className="text-muted-foreground">Em andamento</span>
+                    </div>
+                    <div className="h-3 w-full bg-muted rounded-full overflow-hidden">
+                      <div
+                        className={`h-full bg-primary rounded-full transition-all duration-1000`}
+                        style={{ width: `${item.ageProgress}%` }}
+                      />
+                    </div>
                   </div>
-                  <div className="h-3 w-full bg-muted rounded-full overflow-hidden">
-                    <div
-                      className={`h-full ${item.color} rounded-full transition-all duration-1000`}
-                      style={{ width: `${item.progress}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
             <div className="mt-8 rounded-xl bg-muted/30 border border-dashed border-border p-8 flex flex-col items-center justify-center text-center">
               <Map className="h-10 w-10 text-muted-foreground/50 mb-3" />
@@ -93,15 +92,21 @@ export default function Index() {
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
-              {activities.map((activity) => (
-                <div key={activity.id} className="flex gap-4">
-                  <div className="mt-1 h-2 w-2 rounded-full bg-accent shrink-0" />
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium leading-snug">{activity.text}</p>
-                    <p className="text-xs text-muted-foreground">{activity.date}</p>
+              {activities.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  Nenhuma atividade recente.
+                </p>
+              ) : (
+                activities.map((activity) => (
+                  <div key={activity.id} className="flex gap-4">
+                    <div className="mt-1 h-2 w-2 rounded-full bg-accent shrink-0" />
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium leading-snug">{activity.text}</p>
+                      <p className="text-xs text-muted-foreground">{activity.date}</p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
             <Button variant="ghost" className="w-full mt-6 text-primary" asChild>
               <Link to="/tarefas">

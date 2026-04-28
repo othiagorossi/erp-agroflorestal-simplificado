@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import {
   PieChart,
   Pie,
@@ -27,13 +27,6 @@ import {
 import { useToast } from '@/hooks/use-toast'
 import useMainStore from '@/stores/main'
 
-const bioData = [
-  { name: 'Cacau', value: 40 },
-  { name: 'Palmito', value: 30 },
-  { name: 'Banana', value: 20 },
-  { name: 'Ervas', value: 10 },
-]
-
 const COLORS = [
   'hsl(var(--chart-1))',
   'hsl(var(--chart-2))',
@@ -46,10 +39,20 @@ const bioConfig = {
   palmito: { label: 'Palmito', color: 'hsl(var(--chart-2))' },
   banana: { label: 'Banana', color: 'hsl(var(--chart-3))' },
   ervas: { label: 'Ervas', color: 'hsl(var(--chart-4))' },
+  'Sem dados': { label: 'Sem dados', color: 'hsl(var(--muted))' },
 }
 
 export default function Impact() {
-  const { metrics, soilData, updateMetrics } = useMainStore()
+  const { metrics, soilData, updateMetrics, crops } = useMainStore()
+
+  const bioData = useMemo(() => {
+    if (crops.length === 0) return [{ name: 'Sem dados', value: 1 }]
+    const counts: Record<string, number> = {}
+    crops.forEach((c) => {
+      counts[c.name] = (counts[c.name] || 0) + 1
+    })
+    return Object.entries(counts).map(([name, value]) => ({ name, value }))
+  }, [crops])
   const { toast } = useToast()
   const [open, setOpen] = useState(false)
   const [formData, setFormData] = useState({

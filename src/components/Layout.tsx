@@ -1,5 +1,5 @@
 import { Outlet, useLocation } from 'react-router-dom'
-import { Bell, Search, AlertTriangle } from 'lucide-react'
+import { Bell, Search } from 'lucide-react'
 import { SidebarProvider, SidebarTrigger, SidebarInset } from '@/components/ui/sidebar'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -14,13 +14,6 @@ export default function Layout() {
     <SidebarProvider defaultOpen={!isMobile}>
       <AppSidebar />
       <SidebarInset className="bg-background flex flex-col h-screen overflow-hidden">
-        <div className="bg-amber-100/80 text-amber-800 px-4 py-2 text-xs md:text-sm font-medium flex items-center justify-center gap-2 border-b border-amber-200 shrink-0">
-          <AlertTriangle className="h-4 w-4 shrink-0" />
-          <span className="text-center">
-            Aviso: Dados armazenados em memória. As alterações serão perdidas ao recarregar a página
-            até a integração com o backend.
-          </span>
-        </div>
         <header className="shrink-0 flex h-16 items-center justify-between border-b bg-card px-4 md:px-6 shadow-sm z-10">
           <div className="flex items-center gap-4">
             <SidebarTrigger className="text-muted-foreground hover:text-foreground" />

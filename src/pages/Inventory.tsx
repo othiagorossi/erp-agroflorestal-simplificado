@@ -21,21 +21,10 @@ export default function Inventory() {
               <div className="text-right">Quantidade</div>
             </div>
             <div className="divide-y divide-border">
-              {[
-                { name: 'Adubo Orgânico Compostado', category: 'Insumos', qty: '450 kg' },
-                { name: 'Sementes de Adubação Verde', category: 'Sementes', qty: '25 kg' },
-                { name: 'Mudas de Cacau PS-1319', category: 'Mudas', qty: '120 un' },
-                { name: 'Tesoura de Poda', category: 'Ferramentas', qty: '8 un' },
-              ].map((item, i) => (
-                <div
-                  key={i}
-                  className="grid grid-cols-4 p-4 text-sm items-center hover:bg-muted/30 transition-colors"
-                >
-                  <div className="col-span-2 font-medium">{item.name}</div>
-                  <div className="text-muted-foreground">{item.category}</div>
-                  <div className="text-right">{item.qty}</div>
-                </div>
-              ))}
+              {/* Empty state for inventory */}
+              <div className="p-8 text-center text-muted-foreground text-sm">
+                Nenhum item em estoque.
+              </div>
             </div>
           </div>
 
