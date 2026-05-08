@@ -119,7 +119,11 @@ export default function ProfilePage() {
         description: `Um novo e-mail foi enviado para ${email}.`,
       })
     } catch (error: any) {
-      if (error.message?.includes('already') || error.message?.includes('registered')) {
+      if (
+        error.message?.includes('already') ||
+        error.message?.includes('registered') ||
+        error.message?.includes('ativo')
+      ) {
         toast({ title: 'Aviso', description: 'Este usuário já aceitou o convite e está ativo.' })
       } else {
         toast({ title: 'Erro ao reenviar', description: error.message, variant: 'destructive' })

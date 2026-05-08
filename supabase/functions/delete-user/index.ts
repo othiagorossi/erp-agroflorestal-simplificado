@@ -14,18 +14,49 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      throw new Error('Não autorizado: Token ausente')
+    }
+
     const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } },
+    )
+
+    const {
+      data: { user },
+      error: authError,
+    } = await supabaseClient.auth.getUser()
+    if (authError || !user) throw new Error('Não autorizado: Sessão inválida')
+
+    const adminClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     )
 
+    const { data: profile } = await adminClient
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (profile?.role !== 'admin') {
+      throw new Error('Acesso negado: Apenas administradores podem remover usuários')
+    }
+
     const { userId } = await req.json()
 
     if (!userId) {
-      throw new Error('User ID is required')
+      throw new Error('O ID do usuário é obrigatório')
     }
 
-    const { data, error } = await supabaseClient.auth.admin.deleteUser(userId)
+    if (userId === user.id) {
+      throw new Error('Não é possível remover a si mesmo')
+    }
+
+    const { data, error } = await adminClient.auth.admin.deleteUser(userId)
 
     if (error) throw error
 
