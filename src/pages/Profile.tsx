@@ -1,6 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/use-auth'
-import { getProfiles, updateProfile, inviteUser, deleteUser, Profile } from '@/services/profiles'
+import {
+  getProfiles,
+  updateProfile,
+  inviteUser,
+  resendInvite,
+  deleteUser,
+  Profile,
+} from '@/services/profiles'
 import { useToast } from '@/hooks/use-toast'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -113,11 +120,12 @@ export default function ProfilePage() {
 
   const handleResendInvite = async (email: string, role: string) => {
     try {
-      await inviteUser(email, role)
+      await resendInvite(email, role)
       toast({
         title: 'Convite reenviado',
         description: `Um novo e-mail foi enviado para ${email}.`,
       })
+      fetchProfiles()
     } catch (error: any) {
       if (
         error.message?.includes('already') ||
@@ -290,7 +298,19 @@ export default function ProfilePage() {
                 <TableBody>
                   {profiles.map((profile) => (
                     <TableRow key={profile.id}>
-                      <TableCell className="font-medium">{profile.name || 'Sem nome'}</TableCell>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-2">
+                          <span>{profile.name || 'Sem nome'}</span>
+                          {!profile.name && (
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] h-5 bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-50"
+                            >
+                              Pendente
+                            </Badge>
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell>{profile.email}</TableCell>
                       <TableCell>
                         <Badge variant={profile.role === 'admin' ? 'default' : 'secondary'}>
