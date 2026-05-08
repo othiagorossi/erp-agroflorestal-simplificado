@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/use-auth'
-import { getProfiles, updateProfile, inviteUser, Profile } from '@/services/profiles'
+import { getProfiles, updateProfile, inviteUser, deleteUser, Profile } from '@/services/profiles'
 import { useToast } from '@/hooks/use-toast'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -31,8 +31,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Badge } from '@/components/ui/badge'
-import { Loader2, UserPlus } from 'lucide-react'
+import { Loader2, UserPlus, MoreHorizontal, Mail, Trash } from 'lucide-react'
 
 export default function ProfilePage() {
   const { user } = useAuth()
@@ -100,6 +108,35 @@ export default function ProfilePage() {
       toast({ title: 'Erro ao convidar', description: error.message, variant: 'destructive' })
     } finally {
       setInviting(false)
+    }
+  }
+
+  const handleResendInvite = async (email: string, role: string) => {
+    try {
+      await inviteUser(email, role)
+      toast({
+        title: 'Convite reenviado',
+        description: `Um novo e-mail foi enviado para ${email}.`,
+      })
+    } catch (error: any) {
+      if (error.message?.includes('already') || error.message?.includes('registered')) {
+        toast({ title: 'Aviso', description: 'Este usuário já aceitou o convite e está ativo.' })
+      } else {
+        toast({ title: 'Erro ao reenviar', description: error.message, variant: 'destructive' })
+      }
+    }
+  }
+
+  const handleDeleteUser = async (userId: string) => {
+    if (!confirm('Tem certeza que deseja remover este usuário? Esta ação não pode ser desfeita.'))
+      return
+
+    try {
+      await deleteUser(userId)
+      toast({ title: 'Usuário removido', description: 'O usuário foi removido com sucesso.' })
+      fetchProfiles()
+    } catch (error: any) {
+      toast({ title: 'Erro ao remover', description: error.message, variant: 'destructive' })
     }
   }
 
@@ -243,6 +280,7 @@ export default function ProfilePage() {
                     <TableHead>E-mail</TableHead>
                     <TableHead>Permissão</TableHead>
                     <TableHead>Data de Entrada</TableHead>
+                    {isAdmin && <TableHead className="text-right">Ações</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -258,11 +296,44 @@ export default function ProfilePage() {
                       <TableCell>
                         {new Date(profile.created_at).toLocaleDateString('pt-BR')}
                       </TableCell>
+                      {isAdmin && (
+                        <TableCell className="text-right">
+                          {profile.id !== user?.id && (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                                <DropdownMenuItem
+                                  onClick={() => handleResendInvite(profile.email, profile.role)}
+                                >
+                                  <Mail className="mr-2 h-4 w-4" />
+                                  Reenviar Convite
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={() => handleDeleteUser(profile.id)}
+                                  className="text-destructive focus:text-destructive"
+                                >
+                                  <Trash className="mr-2 h-4 w-4" />
+                                  Remover Usuário
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          )}
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))}
                   {profiles.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center text-muted-foreground py-6">
+                      <TableCell
+                        colSpan={isAdmin ? 5 : 4}
+                        className="text-center text-muted-foreground py-6"
+                      >
                         Nenhum membro encontrado.
                       </TableCell>
                     </TableRow>

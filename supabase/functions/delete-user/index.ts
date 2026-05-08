@@ -13,12 +13,13 @@ Deno.serve(async (req: Request) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     )
 
-    const { email, role } = await req.json()
+    const { userId } = await req.json()
 
-    const { data, error } = await supabaseClient.auth.admin.inviteUserByEmail(email, {
-      data: { role },
-      redirectTo: 'https://cacau4zero.goskip.app',
-    })
+    if (!userId) {
+      throw new Error('User ID is required')
+    }
+
+    const { data, error } = await supabaseClient.auth.admin.deleteUser(userId)
 
     if (error) throw error
 

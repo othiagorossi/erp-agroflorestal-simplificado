@@ -39,3 +39,12 @@ export const inviteUser = async (email: string, role: string) => {
   if (error) throw error
   return data
 }
+
+export const deleteUser = async (userId: string) => {
+  const { data, error } = await supabase.functions.invoke('delete-user', {
+    body: { userId },
+  })
+
+  if (error) throw error
+  return data
+}
