@@ -6,6 +6,7 @@ import {
   inviteUser,
   resendInvite,
   deleteUser,
+  adminUpdateUser,
   Profile,
 } from '@/services/profiles'
 import { useToast } from '@/hooks/use-toast'
@@ -47,7 +48,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Badge } from '@/components/ui/badge'
-import { Loader2, UserPlus, MoreHorizontal, Mail, Trash } from 'lucide-react'
+import { Loader2, UserPlus, MoreHorizontal, Mail, Trash, Pencil } from 'lucide-react'
 
 export default function ProfilePage() {
   const { user } = useAuth()
@@ -60,6 +61,12 @@ export default function ProfilePage() {
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteRole, setInviteRole] = useState('viewer')
   const [inviting, setInviting] = useState(false)
+
+  const [isEditOpen, setIsEditOpen] = useState(false)
+  const [editingUser, setEditingUser] = useState<Profile | null>(null)
+  const [editName, setEditName] = useState('')
+  const [editRole, setEditRole] = useState('viewer')
+  const [isUpdatingMember, setIsUpdatingMember] = useState(false)
 
   const myProfile = profiles.find((p) => p.id === user?.id)
 
@@ -136,6 +143,30 @@ export default function ProfilePage() {
       } else {
         toast({ title: 'Erro ao reenviar', description: error.message, variant: 'destructive' })
       }
+    }
+  }
+
+  const openEditModal = (profile: Profile) => {
+    setEditingUser(profile)
+    setEditName(profile.name || '')
+    setEditRole(profile.role || 'viewer')
+    setIsEditOpen(true)
+  }
+
+  const handleEditMember = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editingUser) return
+
+    try {
+      setIsUpdatingMember(true)
+      await adminUpdateUser(editingUser.id, { name: editName, role: editRole })
+      toast({ title: 'Membro atualizado', description: 'As informações foram salvas com sucesso.' })
+      setIsEditOpen(false)
+      fetchProfiles()
+    } catch (error: any) {
+      toast({ title: 'Erro ao atualizar', description: error.message, variant: 'destructive' })
+    } finally {
+      setIsUpdatingMember(false)
     }
   }
 
@@ -331,6 +362,10 @@ export default function ProfilePage() {
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
                                 <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                                <DropdownMenuItem onClick={() => openEditModal(profile)}>
+                                  <Pencil className="mr-2 h-4 w-4" />
+                                  Editar Membro
+                                </DropdownMenuItem>
                                 <DropdownMenuItem
                                   onClick={() =>
                                     handleResendInvite(profile.id, profile.email, profile.role)
@@ -368,6 +403,54 @@ export default function ProfilePage() {
               </Table>
             </CardContent>
           </Card>
+
+          {/* Modal de Edição */}
+          <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Editar Membro</DialogTitle>
+                <DialogDescription>
+                  Altere os dados e as permissões de acesso deste membro.
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleEditMember} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-email">E-mail</Label>
+                  <Input id="edit-email" value={editingUser?.email || ''} disabled />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-name">Nome Completo</Label>
+                  <Input
+                    id="edit-name"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    placeholder="Ex: João da Silva"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-role">Permissão</Label>
+                  <Select value={editRole} onValueChange={setEditRole}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione um nível" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="admin">Administrador (Acesso Total)</SelectItem>
+                      <SelectItem value="viewer">Visualizador (Apenas Leitura)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <DialogFooter>
+                  <Button type="button" variant="outline" onClick={() => setIsEditOpen(false)}>
+                    Cancelar
+                  </Button>
+                  <Button type="submit" disabled={isUpdatingMember}>
+                    {isUpdatingMember && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Salvar Alterações
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
         </TabsContent>
       </Tabs>
     </div>

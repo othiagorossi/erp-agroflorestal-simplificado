@@ -2,6 +2,7 @@
   "_versions": {
     "invite-user": 4,
     "delete-user": 2,
-    "resend-invite": 2
+    "resend-invite": 2,
+    "update-user": 1
   }
 }

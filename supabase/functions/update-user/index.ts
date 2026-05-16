@@ -36,31 +36,43 @@ Deno.serve(async (req: Request) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     )
 
-    const { data: profile } = await adminClient
+    const { data: adminProfile } = await adminClient
       .from('profiles')
       .select('role')
       .eq('id', user.id)
       .single()
 
-    if (profile?.role !== 'admin') {
-      throw new Error('Acesso negado: Apenas administradores podem convidar usuários')
+    if (adminProfile?.role !== 'admin') {
+      throw new Error('Acesso negado: Apenas administradores podem atualizar usuários')
     }
 
-    const { email, role } = await req.json()
+    const { userId, name, role } = await req.json()
 
-    const { data, error } = await adminClient.auth.admin.inviteUserByEmail(email, {
-      data: { role },
-      redirectTo: 'https://cacau4zero.goskip.app',
+    if (!userId) {
+      throw new Error('O ID do usuário é obrigatório')
+    }
+
+    // Atualiza o user metadata para sincronizar as informações na conta Auth
+    const { error: updateUserError } = await adminClient.auth.admin.updateUserById(userId, {
+      user_metadata: { role, full_name: name },
     })
 
-    if (error) {
-      if (error.message.includes('already registered')) {
-        throw new Error('Este usuário já aceitou o convite e está ativo.')
-      }
-      throw error
-    }
+    if (updateUserError)
+      throw new Error('Erro ao atualizar dados do usuário: ' + updateUserError.message)
 
-    return new Response(JSON.stringify({ data }), {
+    // Atualiza a tabela profiles
+    const updateData: any = {}
+    if (name !== undefined) updateData.name = name
+    if (role !== undefined) updateData.role = role
+
+    const { error: profileError } = await adminClient
+      .from('profiles')
+      .update(updateData)
+      .eq('id', userId)
+
+    if (profileError) throw new Error('Erro ao atualizar perfil: ' + profileError.message)
+
+    return new Response(JSON.stringify({ success: true }), {
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
       status: 200,
     })

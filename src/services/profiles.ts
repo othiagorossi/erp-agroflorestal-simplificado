@@ -65,6 +65,19 @@ export const resendInvite = async (userId: string, email: string, role: string) 
   return data
 }
 
+export const adminUpdateUser = async (
+  userId: string,
+  updates: { name?: string; role?: string },
+) => {
+  const { data, error } = await supabase.functions.invoke('update-user', {
+    body: { userId, ...updates },
+  })
+
+  if (error) await unwrapFunctionError(error)
+  if (data?.error) throw new Error(data.error)
+  return data
+}
+
 export const deleteUser = async (userId: string) => {
   const { data, error } = await supabase.functions.invoke('delete-user', {
     body: { userId },
