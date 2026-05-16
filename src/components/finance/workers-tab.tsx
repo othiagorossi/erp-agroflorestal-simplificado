@@ -95,22 +95,32 @@ export function WorkersTab() {
     const lastPayment = payments.length > 0 ? payments[0].date : null
 
     let daysSincePayment = null
-    let pendingDays = totalDays
 
     if (lastPayment) {
       const last = new Date(lastPayment)
       const now = new Date()
       last.setHours(0, 0, 0, 0)
       now.setHours(0, 0, 0, 0)
-      const diffTime = Math.abs(now.getTime() - last.getTime())
+      const diffTime = Math.max(0, now.getTime() - last.getTime())
       daysSincePayment = Math.floor(diffTime / (1000 * 60 * 60 * 24))
-
-      pendingDays = wRecords
-        .filter((r) => r.type === 'shift' && new Date(r.date) > last)
-        .reduce((acc, curr) => acc + Number(curr.days || 0), 0)
     }
 
-    const pendingAmount = pendingDays * (w.daily_rate || 0)
+    const totalEarned = totalDays * (w.daily_rate || 0)
+
+    const totalPaid = payments.reduce((acc, curr) => {
+      let paid = Number(curr.amount || 0)
+      if (paid === 0 && curr.days) {
+        paid = Number(curr.days) * (w.daily_rate || 0)
+      }
+      return acc + paid
+    }, 0)
+
+    let pendingAmount = totalEarned - totalPaid
+    // Prevent float precision issues
+    pendingAmount = Math.round(pendingAmount * 100) / 100
+
+    let pendingDays = w.daily_rate && w.daily_rate > 0 ? pendingAmount / w.daily_rate : 0
+    pendingDays = Math.round(pendingDays * 100) / 100
 
     const recentShifts = wRecords
       .filter((r) => r.type === 'shift' && r.culture)
@@ -239,7 +249,9 @@ export function WorkersTab() {
                     </span>
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="text-lg font-semibold">{w.pendingDays}</div>
+                    <div className="text-lg font-semibold">
+                      {Number(w.pendingDays).toLocaleString('pt-BR')}
+                    </div>
                     <div className="text-xs text-muted-foreground">
                       R$ {Number(w.pendingAmount || 0).toFixed(2)}
                     </div>

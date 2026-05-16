@@ -34,12 +34,12 @@ export const getWorkers = async () => {
 }
 
 export const createWorker = async (worker: Omit<Worker, 'id' | 'created_at' | 'user_id'>) => {
-  const { data: sessionData } = await supabase.auth.getSession()
-  if (!sessionData.session?.user) throw new Error('Not authenticated')
+  const { data: userData } = await supabase.auth.getUser()
+  if (!userData.user) throw new Error('Not authenticated')
 
   const { data, error } = await supabase
     .from('workers')
-    .insert([{ ...worker, user_id: sessionData.session.user.id }])
+    .insert([{ ...worker, user_id: userData.user.id }])
     .select()
     .single()
 
@@ -69,12 +69,12 @@ export const getAllWorkerRecords = async () => {
 export const addWorkerRecord = async (
   record: Omit<WorkerRecord, 'id' | 'created_at' | 'user_id'>,
 ) => {
-  const { data: sessionData } = await supabase.auth.getSession()
-  if (!sessionData.session?.user) throw new Error('Not authenticated')
+  const { data: userData } = await supabase.auth.getUser()
+  if (!userData.user) throw new Error('Not authenticated')
 
   const { data, error } = await supabase
     .from('worker_records')
-    .insert([{ ...record, user_id: sessionData.session.user.id }])
+    .insert([{ ...record, user_id: userData.user.id }])
     .select()
     .single()
 
