@@ -3,6 +3,7 @@ import {
   getWorkers,
   getAllWorkerRecords,
   deleteWorker,
+  addWorkerRecord,
   Worker,
   WorkerRecord,
 } from '@/services/workers'
@@ -67,6 +68,24 @@ export function WorkersTab() {
     setSelectedWorker(w)
     setInitialRecordTab(type)
     setRecordDialogOpen(true)
+  }
+
+  const handleDirectPayment = async (workerId: string) => {
+    try {
+      await addWorkerRecord({
+        worker_id: workerId,
+        type: 'payment',
+        date: new Date().toISOString().split('T')[0],
+      })
+      toast({ title: 'Sucesso', description: 'Pagamento registrado e contador zerado.' })
+      loadData()
+    } catch (error) {
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível registrar o pagamento.',
+        variant: 'destructive',
+      })
+    }
   }
 
   const formatDate = (dateStr: string) => {
@@ -189,12 +208,12 @@ export function WorkersTab() {
                       <Button
                         size="sm"
                         variant="outline"
-                        title="Registrar Pagamento"
+                        title="Registrar Pagamento (Hoje)"
                         className="text-green-600 border-green-200 hover:bg-green-50 hover:text-green-700"
-                        onClick={() => handleAction(w, 'payment')}
+                        onClick={() => handleDirectPayment(w.id)}
                       >
                         <DollarSign className="h-4 w-4 sm:mr-1" />{' '}
-                        <span className="hidden sm:inline">Pagar</span>
+                        <span className="hidden sm:inline">Zerar</span>
                       </Button>
                       <Button
                         size="icon"
