@@ -22,10 +22,13 @@ Deno.serve(async (req: Request) => {
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: authHeader } } }
+      { global: { headers: { Authorization: authHeader } } },
     )
 
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser()
+    const {
+      data: { user },
+      error: authError,
+    } = await supabaseClient.auth.getUser()
     if (authError || !user) throw new Error('Não autorizado: Sessão inválida')
 
     const adminClient = createClient(
@@ -51,10 +54,11 @@ Deno.serve(async (req: Request) => {
 
     // Atualiza o user metadata para sincronizar as informações na conta Auth
     const { error: updateUserError } = await adminClient.auth.admin.updateUserById(userId, {
-      user_metadata: { role, full_name: name }
+      user_metadata: { role, full_name: name },
     })
-    
-    if (updateUserError) throw new Error('Erro ao atualizar dados do usuário: ' + updateUserError.message)
+
+    if (updateUserError)
+      throw new Error('Erro ao atualizar dados do usuário: ' + updateUserError.message)
 
     // Atualiza a tabela profiles
     const updateData: any = {}

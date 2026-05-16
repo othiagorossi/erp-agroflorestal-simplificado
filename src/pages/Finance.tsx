@@ -4,6 +4,8 @@ import { getFinanceRecords, deleteFinanceRecord, FinanceRecord } from '@/service
 import { FinanceDialog } from '@/components/finance/finance-dialog'
 import { FinanceSummary } from '@/components/finance/finance-summary'
 import { FinanceTable } from '@/components/finance/finance-table'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { WorkersTab } from '@/components/finance/workers-tab'
 
 export default function Finance() {
   const [records, setRecords] = useState<FinanceRecord[]>([])
@@ -69,8 +71,19 @@ export default function Finance() {
         <FinanceDialog isOpen={isOpen} setIsOpen={setIsOpen} onSuccess={handleSuccess} />
       </div>
 
-      <FinanceSummary income={income} expense={expense} balance={balance} />
-      <FinanceTable records={records} loading={loading} onDelete={handleDelete} />
+      <Tabs defaultValue="transactions" className="w-full">
+        <TabsList className="mb-4">
+          <TabsTrigger value="transactions">Transações</TabsTrigger>
+          <TabsTrigger value="workers">Equipe & Mão de Obra</TabsTrigger>
+        </TabsList>
+        <TabsContent value="transactions" className="space-y-8">
+          <FinanceSummary income={income} expense={expense} balance={balance} />
+          <FinanceTable records={records} loading={loading} onDelete={handleDelete} />
+        </TabsContent>
+        <TabsContent value="workers">
+          <WorkersTab />
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
