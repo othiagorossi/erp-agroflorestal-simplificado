@@ -70,7 +70,10 @@ export function WorkersTab() {
   }
 
   const formatDate = (dateStr: string) => {
-    const [y, m, d] = dateStr.split('-')
+    if (!dateStr) return ''
+    const parts = dateStr.split('T')[0].split('-')
+    if (parts.length !== 3) return dateStr
+    const [y, m, d] = parts
     return `${d}/${m}/${y}`
   }
 
@@ -121,10 +124,10 @@ export function WorkersTab() {
       `"${w.name}"`,
       `"${w.culture}"`,
       `"${w.period}"`,
-      w.daily_rate,
+      Number(w.daily_rate || 0).toFixed(2),
       w.totalDays,
       w.pendingDays,
-      w.pendingAmount,
+      Number(w.pendingAmount || 0).toFixed(2),
       w.lastPayment ? formatDate(w.lastPayment) : 'Nenhum',
     ])
 
@@ -203,13 +206,13 @@ export function WorkersTab() {
                       <Badge variant="secondary">{w.period}</Badge>
                     </div>
                     <span className="text-xs text-muted-foreground">
-                      Diária: R$ {w.daily_rate.toFixed(2)}
+                      Diária: R$ {Number(w.daily_rate || 0).toFixed(2)}
                     </span>
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="text-lg font-semibold">{w.pendingDays}</div>
                     <div className="text-xs text-muted-foreground">
-                      R$ {w.pendingAmount.toFixed(2)}
+                      R$ {Number(w.pendingAmount || 0).toFixed(2)}
                     </div>
                   </TableCell>
                   <TableCell className="text-right">

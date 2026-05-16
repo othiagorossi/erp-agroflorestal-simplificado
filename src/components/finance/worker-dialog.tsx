@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -28,6 +28,14 @@ export function WorkerDialog({ onSuccess }: { onSuccess: () => void }) {
   const [dailyRate, setDailyRate] = useState('')
   const [loading, setLoading] = useState(false)
   const { toast } = useToast()
+
+  useEffect(() => {
+    if (period === 'Meio período') {
+      setDailyRate('50')
+    } else if (period === 'Integral') {
+      setDailyRate('100')
+    }
+  }, [period])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
