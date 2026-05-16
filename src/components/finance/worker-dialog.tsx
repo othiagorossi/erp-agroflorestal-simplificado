@@ -25,24 +25,26 @@ export function WorkerDialog({ onSuccess }: { onSuccess: () => void }) {
   const [name, setName] = useState('')
   const [culture, setCulture] = useState('')
   const [period, setPeriod] = useState('')
+  const [dailyRate, setDailyRate] = useState('')
   const [loading, setLoading] = useState(false)
   const { toast } = useToast()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!name || !culture || !period) {
+    if (!name || !culture || !period || !dailyRate) {
       toast({ title: 'Atenção', description: 'Preencha todos os campos.', variant: 'destructive' })
       return
     }
 
     setLoading(true)
     try {
-      await createWorker({ name, culture, period })
+      await createWorker({ name, culture, period, daily_rate: Number(dailyRate) })
       toast({ title: 'Sucesso', description: 'Funcionário cadastrado.' })
       setOpen(false)
       setName('')
       setCulture('')
       setPeriod('')
+      setDailyRate('')
       onSuccess()
     } catch (error) {
       toast({ title: 'Erro', description: 'Não foi possível cadastrar.', variant: 'destructive' })
@@ -96,6 +98,17 @@ export function WorkerDialog({ onSuccess }: { onSuccess: () => void }) {
                 <SelectItem value="Integral">Integral</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Valor da Diária (R$)</Label>
+            <Input
+              type="number"
+              step="0.01"
+              min="0"
+              value={dailyRate}
+              onChange={(e) => setDailyRate(e.target.value)}
+              placeholder="Ex: 100.00"
+            />
           </div>
           <div className="flex justify-end pt-4">
             <Button type="submit" disabled={loading}>

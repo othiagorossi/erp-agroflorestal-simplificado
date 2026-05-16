@@ -7,6 +7,7 @@ export type Worker = {
   name: string
   culture: string
   period: string
+  daily_rate: number
   created_at: string
 }
 

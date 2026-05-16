@@ -3,7 +3,6 @@ import {
   getWorkers,
   getAllWorkerRecords,
   deleteWorker,
-  addWorkerRecord,
   Worker,
   WorkerRecord,
 } from '@/services/workers'
@@ -19,7 +18,7 @@ import {
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Trash2, DollarSign, Calendar } from 'lucide-react'
+import { Trash2, DollarSign, Calendar, Download } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { cn } from '@/lib/utils'
 
@@ -27,7 +26,7 @@ export function WorkersTab() {
   const [workers, setWorkers] = useState<Worker[]>([])
   const [records, setRecords] = useState<WorkerRecord[]>([])
   const [loading, setLoading] = useState(true)
-  const [selectedWorker, setSelectedWorker] = useState<Worker | null>(null)
+  const [selectedWorker, setSelectedWorker] = useState<any>(null)
   const [recordDialogOpen, setRecordDialogOpen] = useState(false)
   const [initialRecordTab, setInitialRecordTab] = useState<'shift' | 'payment'>('shift')
   const { toast } = useToast()
@@ -64,28 +63,10 @@ export function WorkersTab() {
     }
   }
 
-  const handleAction = (w: Worker, type: 'shift' | 'payment') => {
+  const handleAction = (w: any, type: 'shift' | 'payment') => {
     setSelectedWorker(w)
     setInitialRecordTab(type)
     setRecordDialogOpen(true)
-  }
-
-  const handleDirectPayment = async (workerId: string) => {
-    try {
-      await addWorkerRecord({
-        worker_id: workerId,
-        type: 'payment',
-        date: new Date().toISOString().split('T')[0],
-      })
-      toast({ title: 'Sucesso', description: 'Pagamento registrado e contador zerado.' })
-      loadData()
-    } catch (error) {
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível registrar o pagamento.',
-        variant: 'destructive',
-      })
-    }
   }
 
   const formatDate = (dateStr: string) => {
@@ -105,6 +86,8 @@ export function WorkersTab() {
     const lastPayment = payments.length > 0 ? payments[0].date : null
 
     let daysSincePayment = null
+    let pendingDays = totalDays
+
     if (lastPayment) {
       const last = new Date(lastPayment)
       const now = new Date()
@@ -112,21 +95,68 @@ export function WorkersTab() {
       now.setHours(0, 0, 0, 0)
       const diffTime = Math.abs(now.getTime() - last.getTime())
       daysSincePayment = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+
+      pendingDays = wRecords
+        .filter((r) => r.type === 'shift' && new Date(r.date) > last)
+        .reduce((acc, curr) => acc + Number(curr.days || 0), 0)
     }
 
-    return { ...w, totalDays, lastPayment, daysSincePayment }
+    const pendingAmount = pendingDays * (w.daily_rate || 0)
+
+    return { ...w, totalDays, lastPayment, daysSincePayment, pendingDays, pendingAmount }
   })
+
+  const exportToCSV = () => {
+    const headers = [
+      'Nome',
+      'Cultura',
+      'Período',
+      'Diária (R$)',
+      'Total de Dias Trabalhados',
+      'Dias Pendentes',
+      'Valor Pendente (R$)',
+      'Último Pagamento',
+    ]
+    const rows = stats.map((w) => [
+      `"${w.name}"`,
+      `"${w.culture}"`,
+      `"${w.period}"`,
+      w.daily_rate,
+      w.totalDays,
+      w.pendingDays,
+      w.pendingAmount,
+      w.lastPayment ? formatDate(w.lastPayment) : 'Nenhum',
+    ])
+
+    const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n')
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+    link.setAttribute('href', url)
+    link.setAttribute('download', 'relatorio_funcionarios.csv')
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-xl font-semibold">Gestão de Equipe</h2>
           <p className="text-sm text-muted-foreground">
-            Acompanhe os dias trabalhados e pagamentos.
+            Acompanhe produtividade e custos de mão de obra.
           </p>
         </div>
-        <WorkerDialog onSuccess={loadData} />
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={exportToCSV} disabled={stats.length === 0}>
+            <Download className="h-4 w-4 sm:mr-2" />{' '}
+            <span className="hidden sm:inline">Exportar</span>
+          </Button>
+          <WorkerDialog onSuccess={loadData} />
+        </div>
       </div>
 
       <div className="rounded-md border bg-card overflow-hidden">
@@ -134,8 +164,8 @@ export function WorkersTab() {
           <TableHeader>
             <TableRow>
               <TableHead>Nome</TableHead>
-              <TableHead>Cultura / Período</TableHead>
-              <TableHead className="text-right">Dias Trabalhados</TableHead>
+              <TableHead>Detalhes</TableHead>
+              <TableHead className="text-right">Dias Pendentes</TableHead>
               <TableHead className="text-right">Último Pagamento</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
@@ -168,12 +198,20 @@ export function WorkersTab() {
                 >
                   <TableCell className="font-medium">{w.name}</TableCell>
                   <TableCell>
-                    <div className="flex flex-wrap gap-1">
+                    <div className="flex flex-wrap gap-1 mb-1">
                       <Badge variant="outline">{w.culture}</Badge>
                       <Badge variant="secondary">{w.period}</Badge>
                     </div>
+                    <span className="text-xs text-muted-foreground">
+                      Diária: R$ {w.daily_rate.toFixed(2)}
+                    </span>
                   </TableCell>
-                  <TableCell className="text-right text-lg font-semibold">{w.totalDays}</TableCell>
+                  <TableCell className="text-right">
+                    <div className="text-lg font-semibold">{w.pendingDays}</div>
+                    <div className="text-xs text-muted-foreground">
+                      R$ {w.pendingAmount.toFixed(2)}
+                    </div>
+                  </TableCell>
                   <TableCell className="text-right">
                     {w.daysSincePayment !== null ? (
                       <div className="flex flex-col items-end">
@@ -208,12 +246,12 @@ export function WorkersTab() {
                       <Button
                         size="sm"
                         variant="outline"
-                        title="Registrar Pagamento (Hoje)"
+                        title="Registrar Pagamento"
                         className="text-green-600 border-green-200 hover:bg-green-50 hover:text-green-700"
-                        onClick={() => handleDirectPayment(w.id)}
+                        onClick={() => handleAction(w, 'payment')}
                       >
                         <DollarSign className="h-4 w-4 sm:mr-1" />{' '}
-                        <span className="hidden sm:inline">Zerar</span>
+                        <span className="hidden sm:inline">Pagar</span>
                       </Button>
                       <Button
                         size="icon"
@@ -235,6 +273,7 @@ export function WorkersTab() {
       {selectedWorker && (
         <WorkerRecordDialog
           worker={selectedWorker}
+          pendingAmount={selectedWorker.pendingAmount}
           initialTab={initialRecordTab}
           open={recordDialogOpen}
           onOpenChange={setRecordDialogOpen}
