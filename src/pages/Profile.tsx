@@ -118,9 +118,9 @@ export default function ProfilePage() {
     }
   }
 
-  const handleResendInvite = async (email: string, role: string) => {
+  const handleResendInvite = async (userId: string, email: string, role: string) => {
     try {
-      await resendInvite(email, role)
+      await resendInvite(userId, email, role)
       toast({
         title: 'Convite reenviado',
         description: `Um novo e-mail foi enviado para ${email}.`,
@@ -332,7 +332,9 @@ export default function ProfilePage() {
                               <DropdownMenuContent align="end">
                                 <DropdownMenuLabel>Ações</DropdownMenuLabel>
                                 <DropdownMenuItem
-                                  onClick={() => handleResendInvite(profile.email, profile.role)}
+                                  onClick={() =>
+                                    handleResendInvite(profile.id, profile.email, profile.role)
+                                  }
                                 >
                                   <Mail className="mr-2 h-4 w-4" />
                                   Reenviar Convite

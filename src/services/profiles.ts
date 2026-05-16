@@ -46,12 +46,8 @@ async function unwrapFunctionError(error: any) {
 }
 
 export const inviteUser = async (email: string, role: string) => {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
   const { data, error } = await supabase.functions.invoke('invite-user', {
     body: { email, role },
-    headers: session ? { Authorization: `Bearer ${session.access_token}` } : undefined,
   })
 
   if (error) await unwrapFunctionError(error)
@@ -59,13 +55,9 @@ export const inviteUser = async (email: string, role: string) => {
   return data
 }
 
-export const resendInvite = async (email: string, role: string) => {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
+export const resendInvite = async (userId: string, email: string, role: string) => {
   const { data, error } = await supabase.functions.invoke('resend-invite', {
-    body: { email, role },
-    headers: session ? { Authorization: `Bearer ${session.access_token}` } : undefined,
+    body: { userId, email, role },
   })
 
   if (error) await unwrapFunctionError(error)
@@ -74,12 +66,8 @@ export const resendInvite = async (email: string, role: string) => {
 }
 
 export const deleteUser = async (userId: string) => {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
   const { data, error } = await supabase.functions.invoke('delete-user', {
     body: { userId },
-    headers: session ? { Authorization: `Bearer ${session.access_token}` } : undefined,
   })
 
   if (error) await unwrapFunctionError(error)

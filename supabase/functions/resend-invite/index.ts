@@ -22,10 +22,13 @@ Deno.serve(async (req: Request) => {
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: authHeader } } }
+      { global: { headers: { Authorization: authHeader } } },
     )
 
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser()
+    const {
+      data: { user },
+      error: authError,
+    } = await supabaseClient.auth.getUser()
     if (authError || !user) throw new Error('Não autorizado: Sessão inválida')
 
     const adminClient = createClient(
@@ -43,20 +46,17 @@ Deno.serve(async (req: Request) => {
       throw new Error('Acesso negado: Apenas administradores podem reenviar convites')
     }
 
-    const { email, role } = await req.json()
+    const { userId, email, role } = await req.json()
 
-    if (!email) {
-      throw new Error('O e-mail é obrigatório')
+    if (!userId || !email) {
+      throw new Error('ID e e-mail são obrigatórios')
     }
 
-    // Obter o usuário alvo para verificar o status
-    const { data: usersData, error: usersError } = await adminClient.auth.admin.listUsers()
-    if (usersError) throw new Error('Erro ao listar usuários: ' + usersError.message)
+    // Obter o usuário alvo pelo ID para garantir precisão e escapar do limite da listagem (listUsers)
+    const { data: userResp, error: userError } = await adminClient.auth.admin.getUserById(userId)
 
-    const targetUser = usersData.users.find((u: any) => u.email === email)
-
-    // Se o usuário não existir, realiza um convite normal
-    if (!targetUser) {
+    // Se o usuário não existir na base de auth, realiza um convite normal (fallback)
+    if (userError || !userResp?.user) {
       const { data, error } = await adminClient.auth.admin.inviteUserByEmail(email, {
         data: { role: role || 'viewer' },
         redirectTo: 'https://cacau4zero.goskip.app',
@@ -68,6 +68,8 @@ Deno.serve(async (req: Request) => {
         status: 200,
       })
     }
+
+    const targetUser = userResp.user
 
     // Se o usuário já existe, verificar se está ativo
     if (targetUser.last_sign_in_at || targetUser.email_confirmed_at) {
