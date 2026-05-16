@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Trash2, DollarSign, Calendar, Download } from 'lucide-react'
+import { Trash2, DollarSign, Calendar, Download, Plus } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { cn } from '@/lib/utils'
 
@@ -26,7 +26,7 @@ export function WorkersTab() {
   const [workers, setWorkers] = useState<Worker[]>([])
   const [records, setRecords] = useState<WorkerRecord[]>([])
   const [loading, setLoading] = useState(true)
-  const [selectedWorker, setSelectedWorker] = useState<any>(null)
+  const [selectedWorkerId, setSelectedWorkerId] = useState<string | null>(null)
   const [recordDialogOpen, setRecordDialogOpen] = useState(false)
   const [initialRecordTab, setInitialRecordTab] = useState<'shift' | 'payment'>('shift')
   const { toast } = useToast()
@@ -63,9 +63,15 @@ export function WorkersTab() {
     }
   }
 
-  const handleAction = (w: any, type: 'shift' | 'payment') => {
-    setSelectedWorker(w)
+  const handleAction = (wId: string, type: 'shift' | 'payment') => {
+    setSelectedWorkerId(wId)
     setInitialRecordTab(type)
+    setRecordDialogOpen(true)
+  }
+
+  const handleNewRecord = () => {
+    setSelectedWorkerId(null)
+    setInitialRecordTab('shift')
     setRecordDialogOpen(true)
   }
 
@@ -106,14 +112,28 @@ export function WorkersTab() {
 
     const pendingAmount = pendingDays * (w.daily_rate || 0)
 
-    return { ...w, totalDays, lastPayment, daysSincePayment, pendingDays, pendingAmount }
+    const recentShifts = wRecords
+      .filter((r) => r.type === 'shift' && r.culture)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, 3)
+      .map((r) => r.culture)
+
+    const uniqueCultures = [...new Set(recentShifts)]
+
+    return {
+      ...w,
+      totalDays,
+      lastPayment,
+      daysSincePayment,
+      pendingDays,
+      pendingAmount,
+      uniqueCultures,
+    }
   })
 
   const exportToCSV = () => {
     const headers = [
       'Nome',
-      'Cultura',
-      'Período',
       'Diária (R$)',
       'Total de Dias Trabalhados',
       'Dias Pendentes',
@@ -122,8 +142,6 @@ export function WorkersTab() {
     ]
     const rows = stats.map((w) => [
       `"${w.name}"`,
-      `"${w.culture}"`,
-      `"${w.period}"`,
       Number(w.daily_rate || 0).toFixed(2),
       w.totalDays,
       w.pendingDays,
@@ -153,12 +171,16 @@ export function WorkersTab() {
             Acompanhe produtividade e custos de mão de obra.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={exportToCSV} disabled={stats.length === 0}>
             <Download className="h-4 w-4 sm:mr-2" />{' '}
             <span className="hidden sm:inline">Exportar</span>
           </Button>
           <WorkerDialog onSuccess={loadData} />
+          <Button onClick={handleNewRecord}>
+            <Plus className="h-4 w-4 sm:mr-2" />{' '}
+            <span className="hidden sm:inline">Novo Lançamento</span>
+          </Button>
         </div>
       </div>
 
@@ -202,8 +224,15 @@ export function WorkersTab() {
                   <TableCell className="font-medium">{w.name}</TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-1 mb-1">
-                      <Badge variant="outline">{w.culture}</Badge>
-                      <Badge variant="secondary">{w.period}</Badge>
+                      {w.uniqueCultures && w.uniqueCultures.length > 0 ? (
+                        w.uniqueCultures.map((c: any, i: number) => (
+                          <Badge key={i} variant="outline" className="text-[10px] h-5">
+                            {c}
+                          </Badge>
+                        ))
+                      ) : (
+                        <span className="text-xs text-muted-foreground">Sem registros</span>
+                      )}
                     </div>
                     <span className="text-xs text-muted-foreground">
                       Diária: R$ {Number(w.daily_rate || 0).toFixed(2)}
@@ -241,7 +270,7 @@ export function WorkersTab() {
                         size="sm"
                         variant="outline"
                         title="Registrar Diária"
-                        onClick={() => handleAction(w, 'shift')}
+                        onClick={() => handleAction(w.id, 'shift')}
                       >
                         <Calendar className="h-4 w-4 sm:mr-1" />{' '}
                         <span className="hidden sm:inline">Diária</span>
@@ -251,7 +280,7 @@ export function WorkersTab() {
                         variant="outline"
                         title="Registrar Pagamento"
                         className="text-green-600 border-green-200 hover:bg-green-50 hover:text-green-700"
-                        onClick={() => handleAction(w, 'payment')}
+                        onClick={() => handleAction(w.id, 'payment')}
                       >
                         <DollarSign className="h-4 w-4 sm:mr-1" />{' '}
                         <span className="hidden sm:inline">Pagar</span>
@@ -273,16 +302,14 @@ export function WorkersTab() {
         </Table>
       </div>
 
-      {selectedWorker && (
-        <WorkerRecordDialog
-          worker={selectedWorker}
-          pendingAmount={selectedWorker.pendingAmount}
-          initialTab={initialRecordTab}
-          open={recordDialogOpen}
-          onOpenChange={setRecordDialogOpen}
-          onSuccess={loadData}
-        />
-      )}
+      <WorkerRecordDialog
+        stats={stats}
+        preSelectedWorkerId={selectedWorkerId}
+        initialTab={initialRecordTab}
+        open={recordDialogOpen}
+        onOpenChange={setRecordDialogOpen}
+        onSuccess={loadData}
+      />
     </div>
   )
 }

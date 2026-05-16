@@ -5,8 +5,8 @@ export type Worker = {
   id: string
   user_id: string
   name: string
-  culture: string
-  period: string
+  culture?: string
+  period?: string
   daily_rate: number
   created_at: string
 }
@@ -19,6 +19,7 @@ export type WorkerRecord = {
   date: string
   days?: number
   amount?: number
+  culture?: string
   created_at: string
 }
 

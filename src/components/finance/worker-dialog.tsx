@@ -1,14 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import {
   Dialog,
   DialogContent,
@@ -23,39 +16,31 @@ import { Plus } from 'lucide-react'
 export function WorkerDialog({ onSuccess }: { onSuccess: () => void }) {
   const [open, setOpen] = useState(false)
   const [name, setName] = useState('')
-  const [culture, setCulture] = useState('')
-  const [period, setPeriod] = useState('')
   const [dailyRate, setDailyRate] = useState('')
   const [loading, setLoading] = useState(false)
   const { toast } = useToast()
 
-  useEffect(() => {
-    if (period === 'Meio período') {
-      setDailyRate('50')
-    } else if (period === 'Integral') {
-      setDailyRate('100')
-    }
-  }, [period])
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!name || !culture || !period || !dailyRate) {
+    if (!name || !dailyRate) {
       toast({ title: 'Atenção', description: 'Preencha todos os campos.', variant: 'destructive' })
       return
     }
 
     setLoading(true)
     try {
-      await createWorker({ name, culture, period, daily_rate: Number(dailyRate) })
+      await createWorker({ name, daily_rate: Number(dailyRate) })
       toast({ title: 'Sucesso', description: 'Funcionário cadastrado.' })
       setOpen(false)
       setName('')
-      setCulture('')
-      setPeriod('')
       setDailyRate('')
       onSuccess()
-    } catch (error) {
-      toast({ title: 'Erro', description: 'Não foi possível cadastrar.', variant: 'destructive' })
+    } catch (error: any) {
+      toast({
+        title: 'Erro',
+        description: error?.message || 'Não foi possível cadastrar.',
+        variant: 'destructive',
+      })
     } finally {
       setLoading(false)
     }
@@ -64,8 +49,9 @@ export function WorkerDialog({ onSuccess }: { onSuccess: () => void }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" /> Novo Funcionário
+        <Button variant="outline">
+          <Plus className="h-4 w-4 sm:mr-2" />{' '}
+          <span className="hidden sm:inline">Novo Funcionário</span>
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -82,33 +68,7 @@ export function WorkerDialog({ onSuccess }: { onSuccess: () => void }) {
             />
           </div>
           <div className="space-y-2">
-            <Label>Cultura de Trabalho</Label>
-            <Select value={culture} onValueChange={setCulture}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Cacau">Cacau</SelectItem>
-                <SelectItem value="Juçara">Juçara</SelectItem>
-                <SelectItem value="Aromáticas">Aromáticas</SelectItem>
-                <SelectItem value="Geral">Geral</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label>Período</Label>
-            <Select value={period} onValueChange={setPeriod}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Meio período">Meio período</SelectItem>
-                <SelectItem value="Integral">Integral</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label>Valor da Diária (R$)</Label>
+            <Label>Valor da Diária Base (R$)</Label>
             <Input
               type="number"
               step="0.01"
@@ -117,6 +77,9 @@ export function WorkerDialog({ onSuccess }: { onSuccess: () => void }) {
               onChange={(e) => setDailyRate(e.target.value)}
               placeholder="Ex: 100.00"
             />
+            <p className="text-xs text-muted-foreground">
+              Este valor será usado como base para os cálculos de diárias.
+            </p>
           </div>
           <div className="flex justify-end pt-4">
             <Button type="submit" disabled={loading}>
